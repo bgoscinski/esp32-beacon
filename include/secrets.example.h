@@ -1,4 +1,5 @@
 // Create a file named secrets.h and adjust properly
+#pragma once
 
 #define S_SMTP_USER "my_awesome_user"
 #define S_SMTP_PASS "my_secret_password"
