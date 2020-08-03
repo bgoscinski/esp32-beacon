@@ -3,10 +3,15 @@
 // Config must be included first
 
 #include <Arduino.h>
+#include <HTTPClient.h>
 #include <TinyGsmClient.h>
+#include <WiFi.h>
 #include <Wire.h>
 #include <secrets.h>
 #include <sendmail.h>
+
+HTTPClient http;
+WiFiClient hbClient;
 
 // Set serial for debug console (to Serial Monitor, default speed 115200)
 #define SerialMon Serial
@@ -50,19 +55,32 @@ void setup() {
 
   // Restart SIM800 module, it takes quite some time
   // To skip it, call init() instead of restart()
-  SerialMon.println("Initializing modem...");
-  modem.factoryDefault();
-  modem.restart();
-  modem.waitForNetwork();
-  modem.getGsmLocation();
-  modem.gprsConnect("virgin-internet");
+  // SerialMon.println("Initializing modem...");
+  // modem.factoryDefault();
+  // modem.restart();
+  // modem.waitForNetwork();
+  // modem.getGsmLocation();
+  // modem.gprsConnect("virgin-internet");
 
-  auto msg = String("this is a message\nsecond line");
-  sendTextMail(modem, msg);
+  // auto msg = String("this is a message\nsecond line");
+  // sendTextMail(modem, msg);
+
+  SerialMon.print("Setting up WiFi connection");
+  WiFi.begin(S_CAM_SSID, S_CAM_PASS);
+  while (!WiFi.isConnected()) {
+    SerialMon.print('.');
+    delay(500);
+  }
+  SerialMon.println("\nWiFi connection established");
+
+  SerialMon.print("Setting up H connection");
+  hbClient.connect(S_CAM_IP, 3333);
 }
 
-// unsigned long lastCheck = 0;
+unsigned long lastHB = 0;
 void loop() {
+  if (millis() - lastHB > 5000) {
+  }
   while (SerialAT.available()) {
     SerialMon.write(SerialAT.read());
   }
