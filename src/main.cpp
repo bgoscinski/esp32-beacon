@@ -10,7 +10,6 @@
 #include <secrets.h>
 #include <sendmail.h>
 
-HTTPClient http;
 WiFiClient hbClient;
 
 // Set serial for debug console (to Serial Monitor, default speed 115200)
@@ -64,23 +63,72 @@ void setup() {
 
   // auto msg = String("this is a message\nsecond line");
   // sendTextMail(modem, msg);
+}
 
-  SerialMon.print("Setting up WiFi connection");
-  WiFi.begin(S_CAM_SSID, S_CAM_PASS);
-  while (!WiFi.isConnected()) {
-    SerialMon.print('.');
-    delay(500);
-  }
-  SerialMon.println("\nWiFi connection established");
-
-  SerialMon.print("Setting up H connection");
-  hbClient.connect(S_CAM_IP, 3333);
+String get(const char* url) {
+  SerialMon.println(url);
+  HTTPClient http;
+  http.begin(url);
+  http.GET();
+  auto res = http.getString();
+  SerialMon.println(res);
+  http.end();
+  return res;
 }
 
 unsigned long lastHB = 0;
 void loop() {
-  if (millis() - lastHB > 5000) {
+  if (!WiFi.isConnected()) {
+    SerialMon.print("Setting up WiFi connection");
+    WiFi.begin(S_CAM_SSID, S_CAM_PASS);
+    while (!WiFi.isConnected()) {
+      SerialMon.print('.');
+      delay(500);
+    }
+    SerialMon.println("\nWiFi connection established");
   }
+
+  if (!hbClient.connected()) {
+    SerialMon.print("Setting up cam's HeartBeat connection");
+    hbClient.connect(S_CAM_IP, 3333);
+    while (!hbClient.connected()) {
+      SerialMon.print('.');
+      delay(500);
+    }
+    SerialMon.println("\nCam's HeartBeat connection established");
+  }
+
+  if (millis() - lastHB > 5000) {
+    SerialMon.println("Sending HeartBeat signal");
+    lastHB = millis();
+    hbClient.write("02:001:0");
+    hbClient.flush();
+  }
+
+  get("http://" S_CAM_IP ":" C_YI_CONNECT);
+
+  get("http://" S_CAM_IP ":" C_YI_VIDEO_RECORD_OFF);
+
+  get("http://" S_CAM_IP ":" C_YI_MODE_VIDEO);
+
+  get("http://" S_CAM_IP ":" C_YI_VIDEO_RECORD_OFF);
+
+  get("http://" S_CAM_IP ":" C_YI_VIDEO_AUTO_START_OFF);
+
+  get("http://" S_CAM_IP ":" C_YI_PHOTO_RESOLUTION1920);
+
+  delay(100);
+
+  get("http://" S_CAM_IP ":" C_YI_MODE_PHOTO);
+
+  auto res = get("http://" S_CAM_IP ":" C_YI_TAKE_PHOTO);
+  SerialMon.println(res);
+  auto start = res.indexOf("<FPATH>A:") + 9;
+  auto end = res.indexOf("</FPATH", start);
+  auto path = res.substring(start, end);
+  path.replace('\\', '/');
+  SerialMon.println(path);
+
   while (SerialAT.available()) {
     SerialMon.write(SerialAT.read());
   }

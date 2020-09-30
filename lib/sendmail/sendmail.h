@@ -9,7 +9,7 @@
 
 #define EXPECT(x, ret) \
   if (!(x))            \
-    return ret;
+    return (ret);
 
 bool sendTextMail(TinyGsm& modem, String& message) {
   modem.sendAT(GF("+EMAILCID=1"));
