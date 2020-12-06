@@ -4,6 +4,10 @@
     "fstream": "cpp",
     "istream": "cpp",
     "streambuf": "cpp",
-    "*.tpp": "cpp"
-  }
+    "*.tpp": "cpp",
+    "algorithm": "cpp",
+    "random": "cpp",
+    "limits": "cpp"
+  },
+  "terminal.integrated.scrollback": 99999
 }
